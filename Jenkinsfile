@@ -126,7 +126,6 @@ stages{
             cd $BASE_DIR/k8s/${IMAGE_NAME}/.
             kubectl apply -f $BASE_DIR/k8s/${IMAGE_NAME}/
 
-            gcloud auth revoke --all
             """
         }
         }
