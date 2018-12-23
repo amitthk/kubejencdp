@@ -8,6 +8,7 @@ spec:
     metadata:
       labels:
         app: __APP_NAME__
+        updateTimestamp: "__TIMESTAMP__"
     spec:
       containers:
       - name: __APP_NAME__-ctr
@@ -20,5 +21,7 @@ spec:
         env:
           - name: API_ENDPOINT
             value: "http://127.0.0.1:8082/"
+          - name: DEPLOY_TIMESTAMP
+            value: "__TIMESTAMP__"
 
 

@@ -6,7 +6,9 @@
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
+def getTimeStamp(){
+    return sh (script: "date +'%Y%m%d%H%M%S%N' | sed 's/[0-9][0-9][0-9][0-9][0-9][0-9]\$//g'", returnStdout: true);
+}
 def getEnvVar(String paramName){
     return sh (script: "grep '${paramName}' env_vars/project.properties|cut -d'=' -f2", returnStdout: true).trim();
 }
@@ -59,8 +61,9 @@ stages{
         env.BASE_DIR = pwd()
         env.CURRENT_BRANCH = env.BRANCH_NAME
         env.IMAGE_TAG = getImageTag(env.CURRENT_BRANCH)
+        env.TIMESTAMP = getTimeStamp()
         env.APP_NAME= getEnvVar('APP_NAME')
-        env.IMAGE_NAME = "${APP_NAME}-app"
+        env.IMAGE_NAME = getEnvVar('IMAGE_NAME')
         env.PROJECT_NAME=getEnvVar('PROJECT_NAME')
         env.DOCKER_REGISTRY_URL=getEnvVar('DOCKER_REGISTRY_URL')
         env.RELEASE_TAG = getEnvVar('RELEASE_TAG')
@@ -121,10 +124,16 @@ stages{
             chmod +x $BASE_DIR/k8s/process_files.sh
 
             cd $BASE_DIR/k8s/
-            ./process_files.sh "$GCLOUD_PROJECT_ID" "${IMAGE_NAME}" "${DOCKER_PROJECT_NAMESPACE}/${IMAGE_NAME}:${RELEASE_TAG}" "./${IMAGE_NAME}/"
+            ./process_files.sh "$GCLOUD_PROJECT_ID" "${IMAGE_NAME}" "${DOCKER_PROJECT_NAMESPACE}/${IMAGE_NAME}:${RELEASE_TAG}" "./${IMAGE_NAME}/" ${TIMESTAMP}
 
             cd $BASE_DIR/k8s/${IMAGE_NAME}/.
             kubectl apply -f $BASE_DIR/k8s/${IMAGE_NAME}/
+=======
+
+
+            kubectl rollout status --v=5 --watch=true -f $BASE_DIR/k8s/$IMAGE_NAME/$IMAGE_NAME-deployment.yml
+            
+            gcloud auth revoke --all
 
             """
         }
